@@ -36,6 +36,7 @@ pub enum VertexAttributeValues {
     Float4(Vec<[f32; 4]>),
     Int4(Vec<[i32; 4]>),
     Uint4(Vec<[u32; 4]>),
+    Ushort4(Vec<[u16; 4]>),
     Uchar4Norm(Vec<[u8; 4]>),
 }
 
@@ -56,6 +57,7 @@ impl VertexAttributeValues {
             VertexAttributeValues::Float4(ref values) => values.len(),
             VertexAttributeValues::Int4(ref values) => values.len(),
             VertexAttributeValues::Uint4(ref values) => values.len(),
+            VertexAttributeValues::Ushort4(ref values) => values.len(),
             VertexAttributeValues::Uchar4Norm(ref values) => values.len(),
         }
     }
@@ -82,6 +84,7 @@ impl VertexAttributeValues {
             VertexAttributeValues::Float4(values) => values.as_slice().as_bytes(),
             VertexAttributeValues::Int4(values) => values.as_slice().as_bytes(),
             VertexAttributeValues::Uint4(values) => values.as_slice().as_bytes(),
+            VertexAttributeValues::Ushort4(values) => values.as_slice().as_bytes(),
             VertexAttributeValues::Uchar4Norm(values) => values.as_slice().as_bytes(),
         }
     }
@@ -102,6 +105,7 @@ impl From<&VertexAttributeValues> for VertexFormat {
             VertexAttributeValues::Float4(_) => VertexFormat::Float4,
             VertexAttributeValues::Int4(_) => VertexFormat::Int4,
             VertexAttributeValues::Uint4(_) => VertexFormat::Uint4,
+            VertexAttributeValues::Ushort4(_) => VertexFormat::Ushort4,
             VertexAttributeValues::Uchar4Norm(_) => VertexFormat::Uchar4Norm,
         }
     }
