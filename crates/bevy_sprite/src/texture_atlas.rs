@@ -1,6 +1,7 @@
 use crate::Rect;
 use bevy_asset::Handle;
 use bevy_core::Bytes;
+use bevy_ecs::component::Component;
 use bevy_math::Vec2;
 use bevy_reflect::TypeUuid;
 use bevy_render::{
@@ -27,7 +28,7 @@ pub struct TextureAtlas {
     pub texture_handles: Option<HashMap<Handle<Texture>, usize>>,
 }
 
-#[derive(Debug, Clone, RenderResources)]
+#[derive(Component, Debug, Clone, RenderResources)]
 #[render_resources(from_self)]
 #[repr(C)]
 pub struct TextureAtlasSprite {
@@ -112,7 +113,8 @@ impl TextureAtlas {
 
     /// Generate a `TextureAtlas` by splitting a texture into a grid where each
     /// cell of the grid of `tile_size` is one of the textures in the atlas and is separated by
-    /// some `padding` in the texture
+    /// some `padding` in the texture. The padding is assumed to be only between tiles
+    /// and not at the borders of the texture.
     pub fn from_grid_with_padding(
         texture: Handle<Texture>,
         tile_size: Vec2,
@@ -157,13 +159,15 @@ impl TextureAtlas {
     }
 
     /// Add a sprite to the list of textures in the `TextureAtlas`
+    /// returns an index to the texture which can be used with `TextureAtlasSprite`
     ///
     /// # Arguments
     ///
     /// * `rect` - The section of the atlas that contains the texture to be added,
     /// from the top-left corner of the texture to the bottom-right corner
-    pub fn add_texture(&mut self, rect: Rect) {
+    pub fn add_texture(&mut self, rect: Rect) -> u32 {
         self.textures.push(rect);
+        (self.textures.len() - 1) as u32
     }
 
     /// How many textures are in the `TextureAtlas`

@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/bevy_ecs.svg)](https://crates.io/crates/bevy_ecs)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/bevyengine/bevy/blob/HEAD/LICENSE)
-[![Discord](https://img.shields.io/discord/691052431525675048.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/gMUk5Ph)
+[![Discord](https://img.shields.io/discord/691052431525675048.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/bevy)
 
 ## What is Bevy ECS?
 
@@ -131,7 +131,7 @@ fn main() {
     // Add a Stage to our schedule. Each Stage in a schedule runs all of its systems
     // before moving on to the next Stage
     schedule.add_stage("update", SystemStage::parallel()
-        .with_system(movement.system())
+        .with_system(movement)
     );
 
     // Run the schedule once. If your app has a "loop", you would run this once per loop
@@ -193,11 +193,15 @@ Components can be stored in:
 * **Tables**: Fast and cache friendly iteration, but slower adding and removing of components. This is the default storage type.
 * **Sparse Sets**: Fast adding and removing of components, but slower iteration.
 
-Component storage types are configurable, and they default to table storage if the storage is not manually defined. The [`component_storage.rs`](examples/component_storage.rs) example shows how to configure the storage type for a component.
+Component storage types are configurable, and they default to table storage if the storage is not manually defined.
 
-```rust
-// store Position components in Sparse Sets
-world.register_component(ComponentDescriptor::new::<Position>(StorageType::SparseSet));
+```rs
+#[derive(Component)]
+struct TableStoredComponent;
+
+#[derive(Component)]
+#[component(storage = "SparseSet")]
+struct SparseStoredComponent;
 ```
 
 ### Component Bundles

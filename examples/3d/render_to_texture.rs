@@ -19,6 +19,7 @@ use bevy::{
     window::WindowId,
 };
 
+#[derive(Component)]
 pub struct FirstPass;
 
 pub const RENDER_TEXTURE_HANDLE: HandleUntyped =
@@ -109,7 +110,9 @@ fn add_render_to_texture_graph(graph: &mut RenderGraph, size: Extent3d) {
     graph.add_node_edge("transform", FIRST_PASS).unwrap();
 }
 
+#[derive(Component)]
 struct FirstPassCube;
+#[derive(Component)]
 struct MainPassCube;
 
 /// rotates the inner cube (first pass)
@@ -224,10 +227,10 @@ fn setup(
 }
 
 fn main() {
-    let mut app = App::build();
+    let mut app = App::new();
     app.add_plugins(DefaultPlugins)
-        .add_startup_system(setup.system())
-        .add_system(cube_rotator_system.system())
-        .add_system(rotator_system.system())
+        .add_startup_system(setup)
+        .add_system(cube_rotator_system)
+        .add_system(rotator_system)
         .run();
 }

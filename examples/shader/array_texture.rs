@@ -13,15 +13,15 @@ use bevy::{
 /// This example illustrates how to create a texture for use with a texture2DArray shader uniform
 /// variable.
 fn main() {
-    App::build()
+    App::new()
         .add_plugins(DefaultPlugins)
         .add_asset::<MyArrayTexture>()
-        .add_startup_system(setup.system())
-        .add_system(create_array_texture.system())
+        .add_startup_system(setup)
+        .add_system(create_array_texture)
         .run();
 }
 
-#[derive(RenderResources, Default, TypeUuid)]
+#[derive(Component, RenderResources, Default, TypeUuid)]
 #[uuid = "93fb26fc-6c05-489b-9029-601edf703b6b"]
 struct MyArrayTexture {
     pub texture: Handle<Texture>,

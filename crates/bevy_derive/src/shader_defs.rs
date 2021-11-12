@@ -1,7 +1,6 @@
 use bevy_macro_utils::BevyManifest;
 use inflector::Inflector;
 use proc_macro::TokenStream;
-use proc_macro2::Ident;
 use quote::quote;
 use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields, Path};
 
@@ -27,12 +26,12 @@ pub fn derive_shader_defs(input: TokenStream) -> TokenStream {
                 .any(|a| *a.path.get_ident().as_ref().unwrap() == SHADER_DEF_ATTRIBUTE_NAME)
         })
         .map(|f| f.ident.as_ref().unwrap())
-        .collect::<Vec<&Ident>>();
+        .collect::<Vec<&syn::Ident>>();
     let struct_name = &ast.ident;
     let struct_name_pascal_case = ast.ident.to_string().to_pascal_case();
     let shader_defs = shader_def_idents
         .iter()
-        .map(|i| format!("{}_{}", struct_name_pascal_case, i.to_string()).to_uppercase());
+        .map(|i| format!("{}_{}", struct_name_pascal_case, i).to_uppercase());
 
     let shader_defs_len = shader_defs.len();
     let shader_def_indices = 0..shader_defs_len;
@@ -41,7 +40,7 @@ pub fn derive_shader_defs(input: TokenStream) -> TokenStream {
     let (impl_generics, ty_generics, _where_clause) = generics.split_for_impl();
 
     TokenStream::from(quote! {
-        impl #impl_generics #bevy_render_path::shader::ShaderDefs for #struct_name#ty_generics {
+        impl #impl_generics #bevy_render_path::shader::ShaderDefs for #struct_name #ty_generics {
             fn shader_defs_len(&self) -> usize {
                 #shader_defs_len
             }

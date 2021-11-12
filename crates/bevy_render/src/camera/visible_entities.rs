@@ -1,7 +1,9 @@
 use super::{Camera, DepthCalculation};
 use crate::{draw::OutsideFrustum, prelude::Visible};
 use bevy_core::FloatOrd;
-use bevy_ecs::{entity::Entity, query::Without, reflect::ReflectComponent, system::Query};
+use bevy_ecs::{
+    component::Component, entity::Entity, query::Without, reflect::ReflectComponent, system::Query,
+};
 use bevy_reflect::Reflect;
 use bevy_transform::prelude::GlobalTransform;
 
@@ -11,7 +13,7 @@ pub struct VisibleEntity {
     pub order: FloatOrd,
 }
 
-#[derive(Default, Debug, Reflect)]
+#[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component)]
 pub struct VisibleEntities {
     #[reflect(ignore)]
@@ -42,7 +44,7 @@ pub type Layer = u8;
 /// An entity with this component without any layers is invisible.
 ///
 /// Entities without this component belong to layer `0`.
-#[derive(Copy, Clone, Reflect, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Component, Copy, Clone, Reflect, PartialEq, Eq, PartialOrd, Ord)]
 #[reflect(Component, PartialEq)]
 pub struct RenderLayers(LayerMask);
 
@@ -110,7 +112,7 @@ impl RenderLayers {
     /// Panics when called with a layer greater than `TOTAL_LAYERS - 1`.
     pub fn without(mut self, layer: Layer) -> Self {
         assert!(usize::from(layer) < Self::TOTAL_LAYERS);
-        self.0 |= 0 << layer;
+        self.0 &= !(1 << layer);
         self
     }
 
@@ -146,6 +148,11 @@ mod rendering_mask_tests {
         assert_eq!(RenderLayers::layer(0).0, 1, "layer 0 is mask 1");
         assert_eq!(RenderLayers::layer(1).0, 2, "layer 1 is mask 2");
         assert_eq!(RenderLayers::layer(0).with(1).0, 3, "layer 0 + 1 is mask 3");
+        assert_eq!(
+            RenderLayers::layer(0).with(1).without(0).0,
+            2,
+            "layer 0 + 1 - 0 is mask 2"
+        );
         assert!(
             RenderLayers::layer(1).intersects(&RenderLayers::layer(1)),
             "layers match like layers"

@@ -53,8 +53,9 @@ fn update_hierarchy(
 #[cfg(test)]
 mod tests {
     use bevy_ecs::{
+        component::Component,
         schedule::{Schedule, Stage, SystemStage},
-        system::{CommandQueue, Commands, IntoSystem},
+        system::{CommandQueue, Commands},
         world::World,
     };
     use bevy_transform::{components::Transform, hierarchy::BuildChildren};
@@ -63,12 +64,15 @@ mod tests {
 
     use super::{ui_z_system, UI_Z_STEP};
 
-    fn node_with_transform(name: &str) -> (String, Node, Transform) {
-        (name.to_owned(), Node::default(), Transform::identity())
+    #[derive(Component, PartialEq, Debug, Clone)]
+    struct Label(&'static str);
+
+    fn node_with_transform(name: &'static str) -> (Label, Node, Transform) {
+        (Label(name), Node::default(), Transform::identity())
     }
 
-    fn node_without_transform(name: &str) -> (String, Node) {
-        (name.to_owned(), Node::default())
+    fn node_without_transform(name: &'static str) -> (Label, Node) {
+        (Label(name), Node::default())
     }
 
     fn get_steps(transform: &Transform) -> u32 {
@@ -122,34 +126,34 @@ mod tests {
 
         let mut schedule = Schedule::default();
         let mut update_stage = SystemStage::parallel();
-        update_stage.add_system(ui_z_system.system());
+        update_stage.add_system(ui_z_system);
         schedule.add_stage("update", update_stage);
         schedule.run(&mut world);
 
         let mut actual_result = world
-            .query::<(&String, &Transform)>()
+            .query::<(&Label, &Transform)>()
             .iter(&world)
             .map(|(name, transform)| (name.clone(), get_steps(transform)))
-            .collect::<Vec<(String, u32)>>();
-        actual_result.sort_unstable_by_key(|(name, _)| name.clone());
+            .collect::<Vec<(Label, u32)>>();
+        actual_result.sort_unstable_by_key(|(name, _)| name.0);
         let expected_result = vec![
-            ("0".to_owned(), 1),
-            ("1".to_owned(), 1),
-            ("1-0".to_owned(), 1),
-            ("1-0-0".to_owned(), 1),
+            (Label("0"), 1),
+            (Label("1"), 1),
+            (Label("1-0"), 1),
+            (Label("1-0-0"), 1),
             // 1-0-1 has no transform
-            ("1-0-2".to_owned(), 3),
-            ("1-1".to_owned(), 5),
+            (Label("1-0-2"), 3),
+            (Label("1-1"), 5),
             // 1-2 has no transform
-            ("1-2-0".to_owned(), 1),
-            ("1-2-1".to_owned(), 2),
-            ("1-2-2".to_owned(), 3),
-            ("1-2-3".to_owned(), 4),
-            ("1-3".to_owned(), 11),
+            (Label("1-2-0"), 1),
+            (Label("1-2-1"), 2),
+            (Label("1-2-2"), 3),
+            (Label("1-2-3"), 4),
+            (Label("1-3"), 11),
             // 2 has no transform
-            ("2-0".to_owned(), 1),
-            ("2-1".to_owned(), 2),
-            ("2-1-0".to_owned(), 1),
+            (Label("2-0"), 1),
+            (Label("2-1"), 2),
+            (Label("2-1-0"), 1),
         ];
         assert_eq!(actual_result, expected_result);
     }

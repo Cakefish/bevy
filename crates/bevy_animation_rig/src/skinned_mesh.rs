@@ -1,9 +1,5 @@
 use bevy_asset::{Assets, Handle, HandleUntyped};
-use bevy_ecs::{
-    entity::{Entity, EntityMap, MapEntities, MapEntitiesError},
-    reflect::{ReflectComponent, ReflectMapEntities},
-    system::{Query, Res, ResMut},
-};
+use bevy_ecs::{entity::{Entity, EntityMap, MapEntities, MapEntitiesError}, prelude::Component, reflect::{ReflectComponent, ReflectMapEntities}, system::{Query, Res, ResMut}};
 use bevy_math::Mat4;
 use bevy_pbr::render_graph;
 use bevy_reflect::{
@@ -62,7 +58,7 @@ pub const SKINNED_MESH_PIPELINE_HANDLE: HandleUntyped =
 ///     ));
 /// }
 /// ```
-#[derive(Debug, Default, Clone, Reflect)]
+#[derive(Debug, Default, Clone, Reflect, Component)]
 #[reflect(Component, MapEntities)]
 pub struct SkinnedMesh {
     pub inverse_bindposes: Handle<SkinnedMeshInverseBindposes>,

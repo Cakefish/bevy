@@ -24,7 +24,6 @@ where
     filter: F::Fetch,
     current_len: usize,
     current_index: usize,
-    is_dense: bool,
 }
 
 impl<'w, 's, Q: WorldQuery, F: WorldQuery> QueryIter<'w, 's, Q, F>
@@ -60,7 +59,6 @@ where
             query_state,
             tables: &world.storages().tables,
             archetypes: &world.archetypes,
-            is_dense: fetch.is_dense() && filter.is_dense(),
             fetch,
             filter,
             table_id_iter: query_state.matched_table_ids.iter(),
@@ -76,7 +74,7 @@ where
         // NOTE: this mimics the behavior of `QueryIter::next()`, except that it
         // never gets a `Self::Item`.
         unsafe {
-            if self.is_dense {
+            if Q::Fetch::IS_DENSE && F::Fetch::IS_DENSE {
                 loop {
                     if self.current_index == self.current_len {
                         let table_id = match self.table_id_iter.next() {
@@ -131,7 +129,7 @@ impl<'w, 's, Q: WorldQuery, F: WorldQuery> Iterator for QueryIter<'w, 's, Q, F>
 where
     F::Fetch: FilterFetch,
 {
-    type Item = <Q::Fetch as Fetch<'w>>::Item;
+    type Item = <Q::Fetch as Fetch<'w, 's>>::Item;
 
     // NOTE: If you are changing query iteration code, remember to update the following places, where relevant:
     // QueryIter, QueryIterationCursor, QueryState::for_each_unchecked_manual, QueryState::par_for_each_unchecked_manual
@@ -139,7 +137,7 @@ where
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         unsafe {
-            if self.is_dense {
+            if Q::Fetch::IS_DENSE && F::Fetch::IS_DENSE {
                 loop {
                     if self.current_index == self.current_len {
                         let table_id = self.table_id_iter.next()?;
@@ -279,7 +277,7 @@ where
     /// It is always safe for shared access.
     unsafe fn fetch_next_aliased_unchecked<'a>(
         &mut self,
-    ) -> Option<[<Q::Fetch as Fetch<'a>>::Item; K]>
+    ) -> Option<[<Q::Fetch as Fetch<'a, 's>>::Item; K]>
     where
         Q::Fetch: Clone,
         F::Fetch: Clone,
@@ -290,16 +288,12 @@ where
 
         // first, iterate from last to first until next item is found
         'outer: for i in (0..K).rev() {
-            match self.cursors[i].next(&self.tables, &self.archetypes, &self.query_state) {
+            match self.cursors[i].next(self.tables, self.archetypes, self.query_state) {
                 Some(_) => {
                     // walk forward up to last element, propagating cursor state forward
                     for j in (i + 1)..K {
                         self.cursors[j] = self.cursors[j - 1].clone();
-                        match self.cursors[j].next(
-                            &self.tables,
-                            &self.archetypes,
-                            &self.query_state,
-                        ) {
+                        match self.cursors[j].next(self.tables, self.archetypes, self.query_state) {
                             Some(_) => {}
                             None if i > 0 => continue 'outer,
                             None => return None,
@@ -313,7 +307,7 @@ where
         }
 
         // TODO: use MaybeUninit::uninit_array if it stabilizes
-        let mut values: [MaybeUninit<<Q::Fetch as Fetch<'a>>::Item>; K] =
+        let mut values: [MaybeUninit<<Q::Fetch as Fetch<'a, 's>>::Item>; K] =
             MaybeUninit::uninit().assume_init();
 
         for (value, cursor) in values.iter_mut().zip(&mut self.cursors) {
@@ -321,15 +315,15 @@ where
         }
 
         // TODO: use MaybeUninit::array_assume_init if it stabilizes
-        let values: [<Q::Fetch as Fetch<'a>>::Item; K] =
-            (&values as *const _ as *const [<Q::Fetch as Fetch<'a>>::Item; K]).read();
+        let values: [<Q::Fetch as Fetch<'a, 's>>::Item; K] =
+            (&values as *const _ as *const [<Q::Fetch as Fetch<'a, 's>>::Item; K]).read();
 
         Some(values)
     }
 
     /// Get next combination of queried components
     #[inline]
-    pub fn fetch_next(&mut self) -> Option<[<Q::Fetch as Fetch<'_>>::Item; K]>
+    pub fn fetch_next(&mut self) -> Option<[<Q::Fetch as Fetch<'_, 's>>::Item; K]>
     where
         Q::Fetch: Clone,
         F::Fetch: Clone,
@@ -350,7 +344,7 @@ where
     Q::Fetch: Clone + ReadOnlyFetch,
     F::Fetch: Clone + FilterFetch + ReadOnlyFetch,
 {
-    type Item = [<Q::Fetch as Fetch<'w>>::Item; K];
+    type Item = [<Q::Fetch as Fetch<'w, 's>>::Item; K];
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -411,7 +405,6 @@ struct QueryIterationCursor<'s, Q: WorldQuery, F: WorldQuery> {
     filter: F::Fetch,
     current_len: usize,
     current_index: usize,
-    is_dense: bool,
 }
 
 impl<'s, Q: WorldQuery, F: WorldQuery> Clone for QueryIterationCursor<'s, Q, F>
@@ -427,7 +420,6 @@ where
             filter: self.filter.clone(),
             current_len: self.current_len,
             current_index: self.current_index,
-            is_dense: self.is_dense,
         }
     }
 }
@@ -468,7 +460,6 @@ where
             change_tick,
         );
         QueryIterationCursor {
-            is_dense: fetch.is_dense() && filter.is_dense(),
             fetch,
             filter,
             table_id_iter: query_state.matched_table_ids.iter(),
@@ -480,9 +471,9 @@ where
 
     /// retrieve item returned from most recent `next` call again.
     #[inline]
-    unsafe fn peek_last<'w>(&mut self) -> Option<<Q::Fetch as Fetch<'w>>::Item> {
+    unsafe fn peek_last<'w>(&mut self) -> Option<<Q::Fetch as Fetch<'w, 's>>::Item> {
         if self.current_index > 0 {
-            if self.is_dense {
+            if Q::Fetch::IS_DENSE && F::Fetch::IS_DENSE {
                 Some(self.fetch.table_fetch(self.current_index - 1))
             } else {
                 Some(self.fetch.archetype_fetch(self.current_index - 1))
@@ -501,8 +492,8 @@ where
         tables: &'w Tables,
         archetypes: &'w Archetypes,
         query_state: &'s QueryState<Q, F>,
-    ) -> Option<<Q::Fetch as Fetch<'w>>::Item> {
-        if self.is_dense {
+    ) -> Option<<Q::Fetch as Fetch<'w, 's>>::Item> {
+        if Q::Fetch::IS_DENSE && F::Fetch::IS_DENSE {
             loop {
                 if self.current_index == self.current_len {
                     let table_id = self.table_id_iter.next()?;
