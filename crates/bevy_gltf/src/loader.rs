@@ -81,9 +81,6 @@ async fn load_gltf<'a, 'b>(
     bytes: &'a [u8],
     load_context: &'a mut LoadContext<'b>,
 ) -> Result<(), GltfError> {
-
-    println!("Loading GLTF file");
-
     let gltf = gltf::Gltf::from_slice(bytes)?;
     let buffer_data = load_buffers(&gltf, load_context, load_context.path()).await?;
 
