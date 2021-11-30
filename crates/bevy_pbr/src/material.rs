@@ -4,7 +4,7 @@ use bevy_render::{color::Color, renderer::RenderResources, shader::ShaderDefs, t
 
 /// A material with "standard" properties used in PBR lighting
 /// Standard property values with pictures here https://google.github.io/filament/Material%20Properties.pdf
-#[derive(Debug, RenderResources, ShaderDefs, TypeUuid)]
+#[derive(Debug, RenderResources, ShaderDefs, TypeUuid, Clone)]
 #[uuid = "dace545e-4bc6-4595-a79d-c224fc694975"]
 pub struct StandardMaterial {
     /// Doubles as diffuse albedo for non-metallic, specular for metallic and a mix for everything in between
