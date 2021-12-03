@@ -3,6 +3,7 @@ use bevy_ecs::{
     entity::{Entity, EntityMap, MapEntities, MapEntitiesError},
     reflect::{ReflectComponent, ReflectMapEntities},
     system::{Query, Res, ResMut},
+    component::Component,
 };
 use bevy_math::Mat4;
 use bevy_pbr::render_graph;
@@ -62,7 +63,7 @@ pub const SKINNED_MESH_PIPELINE_HANDLE: HandleUntyped =
 ///     ));
 /// }
 /// ```
-#[derive(Debug, Default, Clone, Reflect)]
+#[derive(Debug, Default, Clone, Reflect, Component)]
 #[reflect(Component, MapEntities)]
 pub struct SkinnedMesh {
     pub inverse_bindposes: Handle<SkinnedMeshInverseBindposes>,

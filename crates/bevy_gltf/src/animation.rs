@@ -1,6 +1,6 @@
 
 use bevy_asset::{Handle};
-use bevy_ecs::prelude::ReflectComponent;
+use bevy_ecs::prelude::*;
 use bevy_math::{Quat, Vec3};
 use gltf::animation::{Interpolation, util::{MorphTargetWeights, ReadOutputs, Rotations}};
 
@@ -10,7 +10,7 @@ use bevy_reflect::{Reflect, TypeUuid};
 /// A component for transform nodes loaded by the Gltf loader that indicates this entity is the target of at least one animation in the Gltf asset.
 ///
 /// One or more animations may target the same node at different property paths. Each unique animation/channel pair  that targets this entity receives an entry in the `animations` and `channel_indices` vectors. For example, the animation index at animations\[`1`\] targets a property of this entity through the channel index identified by the value at channel_indices\[`1`\].
-#[derive(Debug, Default, Clone, Reflect)]
+#[derive(Debug, Default, Clone, Reflect, Component)]
 #[reflect(Component)]
 pub struct GltfAnimTargetInfo {
     pub gltf: Handle<Gltf>,
@@ -47,7 +47,7 @@ pub struct GltfAnimChannel {
     pub sampler: GltfAnimSampler,
     pub index: usize,
     pub(crate) start_time: f32,
-    pub(crate) end_time: f32, 
+    pub(crate) end_time: f32,
 }
 impl GltfAnimChannel {
     /// The time in seconds of first keyframe in this channel.

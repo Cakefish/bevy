@@ -11,7 +11,7 @@ use bevy::{
 /// Skinned mesh example with mesh, joints, and animation data loaded from a glTF file.
 /// Example taken from https://github.com/KhronosGroup/glTF-Tutorials/blob/master/gltfTutorial/gltfTutorial_019_SimpleSkin.md
 fn main() {
-    App::build()
+    App::new()
         .add_plugins(DefaultPlugins)
         .insert_resource(AmbientLight {
             brightness: 1.0,
@@ -19,7 +19,7 @@ fn main() {
         })
         .add_startup_system(setup.system())
         // This general-purpose system adds AnimationControllers to entities that request them for a given Gltf.
-        .add_system(activate_animations.system())
+        .add_system(activate_animations)
         // This example system updates the GltfAnimationController to set animation times and weights. The GltfAnimationController can be used with any Gltf animation data to drive and blend multiple animations.
         .add_system(update_animation_controllers.system())
         // This general-purpose system takes the times and weights specified by GltfAnimationControllers and updates entities that automatically receive GltfAnimTargetInfo from the Gltf animation loader when they are spawned.
@@ -49,6 +49,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(ActivateGltfAnimation(gltf_handle.clone()));
 }
 
+#[derive(Component)]
 struct ActivateGltfAnimation(Handle<Gltf>);
 
 /// Replaces ActivateGltfAnimation components with GltfAnimationController when the corresponding Gltf is ready.
@@ -111,7 +112,7 @@ fn update_animation_controllers(mut query: Query<&mut GltfAnimationController>, 
 /// Component containing the data necessary to evaluate Gltf animation property data (translation, rotation, scale, and morph target weights) for target GltfNodes at a given time.
 ///
 /// The update_gltf_animations system supports evaluating and blending multiple animations, given a set of animation index weights. All animations are evaluated and contribute to the final evaluated node property values unless their weight is zero.
-#[derive(Debug)]
+#[derive(Debug, Component)]
 struct GltfAnimationController {
     animations: Vec<Handle<GltfAnimation>>,
     times: Vec<f32>,
